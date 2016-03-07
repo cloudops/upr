@@ -46,7 +46,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfg_file, "config", "", "config file (default is $HOME/.upr.yaml or ./.upr.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfg_file, "config", "", "config file (default is ./config.yaml)")
 	RootCmd.PersistentFlags().StringP("token", "t", "", "required: Github access token (https://github.com/settings/tokens)")
 	RootCmd.PersistentFlags().StringP("owner", "o", "", "required: owner of the repo you are working with")
 	RootCmd.PersistentFlags().StringP("repo", "r", "", "required: name of the repo you are working with")
@@ -61,10 +61,9 @@ func initConfig() {
 		viper.SetConfigFile(cfg_file)
 	}
 
-	viper.SetConfigName(".upr")  // name of config file (without extension)
-	viper.AddConfigPath("$HOME") // adding home directory as first search path
-	viper.AddConfigPath(".")     // optionally look for config in the working directory
-	viper.AutomaticEnv()         // read in environment variables that match
+	viper.SetConfigName("config") // name of config file (without extension)
+	viper.AddConfigPath(".")      // optionally look for config in the working directory
+	viper.AutomaticEnv()          // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

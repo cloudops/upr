@@ -7,8 +7,8 @@ This tool is designed to be integrated into a CI implementation
 in order to update the Status or add a Comment.
 
 
-Get It
-------
+Get `upr`
+---------
 
 Cross compiled binaries are available in the `bin` directory.  Simply download the correct binary for your system and run it.
 
