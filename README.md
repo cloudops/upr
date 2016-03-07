@@ -19,6 +19,9 @@ $ wget -O upr https://github.com/swill/upr/blob/master/bin/upr_<os>_<arch>
 
 Usage
 -----
+
+The `token` needs to have `repo:status` and `public_repo` permissions on the target `repo` in order for this tool to function.
+
 ```
 $ upr status -h
 Add or update a pull request status on Github.
