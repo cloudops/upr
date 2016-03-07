@@ -1,5 +1,5 @@
-upr
-===
+`upr`
+=====
 
 A command line tool to manipulate pull requests on Github.
 	
