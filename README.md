@@ -12,7 +12,7 @@ in order to update the Status or add a Comment.
 Get `upr`
 ---------
 
-Cross compiled binaries are available under (Releases)[https://github.com/swill/upr/releases].  Simply download the correct binary for your system and run it.
+Cross compiled binaries are available under [Releases](https://github.com/swill/upr/releases).  Simply download the correct binary for your system and run it.
 
 
 Usage
