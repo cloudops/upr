@@ -41,7 +41,7 @@ Flags:
   -u, --url string       a reference url for more information about this status
 
 Global Flags:
-      --config string   config file (default is $HOME/.upr.yaml or ./.upr.yaml)
+      --config string   config file (default is ./config.yaml)
   -o, --owner string    required: owner of the repo you are working with
   -r, --repo string     required: name of the repo you are working with
   -t, --token string    required: Github access token (https://github.com/settings/tokens)
@@ -50,7 +50,7 @@ Global Flags:
 
 Config File
 -----------
-By default, a config file at either `$HOME/.upr.yaml` or `./.upr.yaml` will be automatically picked up.  You can also specify your own config file by passing in the `--config` flag.
+By default, a config file at `./config.yaml` will automatically be picked up.  You can also specify your own config file by passing in the `--config` flag.
 
 The following config file formats are supported: JSON, YAML, TOML and HCL
 
