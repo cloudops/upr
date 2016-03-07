@@ -13,7 +13,7 @@ Get It
 Cross compiled binaries are available in the `bin` directory.  Simply download the correct binary for your system and run it.
 
 ```
-$ wget -O upr https://github.com/swill/upr/blob/master/bin/upr_<os>_<arch>
+$ wget -O upr https://github.com/swill/upr/raw/master/bin/upr_<os>_<arch>
 ```
 
 
