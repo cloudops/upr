@@ -47,9 +47,9 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	RootCmd.PersistentFlags().StringVar(&cfg_file, "config", "", "config file (default is $HOME/.upr.yaml or ./.upr.yaml)")
-	RootCmd.PersistentFlags().StringP("token", "t", "", "Github access token (https://github.com/settings/tokens)")
-	RootCmd.PersistentFlags().StringP("owner", "o", "", "owner of the repo you are working with")
-	RootCmd.PersistentFlags().StringP("repo", "r", "", "name of the repo you are working with")
+	RootCmd.PersistentFlags().StringP("token", "t", "", "required: Github access token (https://github.com/settings/tokens)")
+	RootCmd.PersistentFlags().StringP("owner", "o", "", "required: owner of the repo you are working with")
+	RootCmd.PersistentFlags().StringP("repo", "r", "", "required: name of the repo you are working with")
 	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
 	viper.BindPFlag("owner", RootCmd.PersistentFlags().Lookup("owner"))
 	viper.BindPFlag("repo", RootCmd.PersistentFlags().Lookup("repo"))

@@ -34,17 +34,17 @@ Usage:
   upr status [flags]
 
 Flags:
-  -c, --commit string    commit to associate the status with
-  -x, --context string   the contextual identifier for this status
-  -d, --desc string      a short description of the status
-  -s, --state string     pull request state (pending | success | failure | error)
+  -c, --commit string    required: commit to associate the status with
+  -x, --context string   required: the contextual identifier for this status
+  -d, --desc string      a short description of the environment context
+  -s, --state string     required: pull request state (pending | success | failure | error)
   -u, --url string       a reference url for more information about this status
 
 Global Flags:
       --config string   config file (default is $HOME/.upr.yaml or ./.upr.yaml)
-  -o, --owner string    owner of the repo you are working with
-  -r, --repo string     name of the repo you are working with
-  -t, --token string    Github access token (https://github.com/settings/tokens)
+  -o, --owner string    required: owner of the repo you are working with
+  -r, --repo string     required: name of the repo you are working with
+  -t, --token string    required: Github access token (https://github.com/settings/tokens)
 ```
 
 
@@ -53,3 +53,5 @@ Config File
 By default, a config file at either `$HOME/.upr.yaml` or `./.upr.yaml` will be automatically picked up.  You can also specify your own config file by passing in the `--config` flag.
 
 The following config file formats are supported: JSON, YAML, TOML and HCL
+
+It is recommended that you configure all of the global configuration flags, such as `token`, `owner` and `repo`, into a config file and only pass the contextual configuration flags via the command line.

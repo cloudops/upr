@@ -49,10 +49,10 @@ func init() {
 	RootCmd.AddCommand(statusCmd)
 
 	statusCmd.Run = status
-	statusCmd.Flags().StringVarP(&commit, "commit", "c", "", "commit to associate the status with")
-	statusCmd.Flags().StringVarP(&state, "state", "s", "", "pull request state (pending | success | failure | error)")
-	statusCmd.Flags().StringVarP(&desc, "desc", "d", "", "a short description of the status")
-	statusCmd.Flags().StringVarP(&context, "context", "x", "", "the contextual identifier for this status")
+	statusCmd.Flags().StringVarP(&commit, "commit", "c", "", "required: commit to associate the status with")
+	statusCmd.Flags().StringVarP(&state, "state", "s", "", "required: pull request state (pending | success | failure | error)")
+	statusCmd.Flags().StringVarP(&desc, "desc", "d", "", "a short description of the environment context")
+	statusCmd.Flags().StringVarP(&context, "context", "x", "", "required: the contextual identifier for this status")
 	statusCmd.Flags().StringVarP(&url, "url", "u", "", "a reference url for more information about this status")
 	viper.BindPFlag("commit", statusCmd.Flags().Lookup("commit"))
 	viper.BindPFlag("state", statusCmd.Flags().Lookup("state"))
