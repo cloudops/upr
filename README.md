@@ -1,6 +1,8 @@
 `upr`
 =====
 
+**Current Version: 0.1.0**
+
 A command line tool to manipulate pull requests on Github.
 	
 This tool is designed to be integrated into a CI implementation
@@ -10,11 +12,7 @@ in order to update the Status or add a Comment.
 Get `upr`
 ---------
 
-Cross compiled binaries are available in the `bin` directory.  Simply download the correct binary for your system and run it.
-
-```
-$ wget -O upr https://github.com/swill/upr/raw/master/bin/upr_<os>_<arch>
-```
+Cross compiled binaries are available under (Releases)[https://github.com/swill/upr/releases].  Simply download the correct binary for your system and run it.
 
 
 Usage
@@ -55,3 +53,11 @@ By default, a config file at `./config.yaml` will automatically be picked up.  Y
 The following config file formats are supported: JSON, YAML, TOML and HCL
 
 It is recommended that you configure all of the global configuration flags, such as `token`, `owner` and `repo`, into a config file and only pass the contextual configuration flags via the command line.
+
+
+Change Log
+----------
+
+### 0.1.0 - 2016/03/07
+- Initial release of the tool.  It currently only supports updating the `status` of a pull request based on the PR commit.
+
