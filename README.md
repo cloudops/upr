@@ -6,7 +6,9 @@
 A command line tool to manipulate pull requests on Github.
 	
 This tool is designed to be integrated into a CI implementation
-in order to update the Status or add a Comment.
+in order to update the Status of a pull request commit.
+
+![Pull Request Status](https://objects-east.cloud.ca/v1/5ef827605f884961b94881e928e7a250/swill/pr_testing/combo_ci.png)
 
 
 Get `upr`

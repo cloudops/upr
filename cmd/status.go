@@ -123,6 +123,7 @@ func status(cmd *cobra.Command, args []string) {
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 	gh := github.NewClient(tc)
 
+	// RepoStatus takes type *string
 	_state := &state
 	_context := &context
 	_desc := &desc
