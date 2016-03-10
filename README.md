@@ -20,7 +20,7 @@ Cross compiled binaries are available under [Releases](https://github.com/swill/
 Usage
 -----
 
-The `token` needs to have `repo:status` and `public_repo` permissions on the target `repo` in order for this tool to function.
+The `token` needs to simply have `repo:status` permission on the target `repo` in order for this tool to function.
 
 ```
 $ upr status -h
