@@ -22,6 +22,7 @@ Usage
 
 The `token` needs to have `repo:status` and `public_repo` permissions on the target `repo` in order for this tool to function.
 
+**`upr status`**
 ```
 $ upr status -h
 Add or update a pull request status on Github.

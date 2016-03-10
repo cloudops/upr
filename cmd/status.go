@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -26,19 +27,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	commit  string
-	state   string
-	desc    string
-	context string
-	url     string
-)
-
 // statusCmd represents the status command
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Add or update a pull request status on Github.",
-	Long: `Add or update a pull request status on Github.
+	Long: `Add or update  the status of a pull request on Github.
 
 This command allows an arbitrary CI implementation to
 post back the status of its run to the pull request
@@ -49,21 +42,19 @@ func init() {
 	RootCmd.AddCommand(statusCmd)
 
 	statusCmd.Run = status
-	statusCmd.Flags().StringVarP(&commit, "commit", "c", "", "required: commit to associate the status with")
-	statusCmd.Flags().StringVarP(&state, "state", "s", "", "required: pull request state (pending | success | failure | error)")
-	statusCmd.Flags().StringVarP(&desc, "desc", "d", "", "a short description of the environment context")
-	statusCmd.Flags().StringVarP(&context, "context", "x", "", "required: the contextual identifier for this status")
-	statusCmd.Flags().StringVarP(&url, "url", "u", "", "a reference url for more information about this status")
-	viper.BindPFlag("commit", statusCmd.Flags().Lookup("commit"))
+	statusCmd.Flags().StringP("state", "s", "", "required: pull request state (pending | success | failure | error)")
+	statusCmd.Flags().StringP("desc", "d", "", "a short description of the environment context")
+	statusCmd.Flags().StringP("context", "x", "", "required: the contextual identifier for this status")
+	statusCmd.Flags().StringP("url", "u", "", "a reference url for more information about this status")
 	viper.BindPFlag("state", statusCmd.Flags().Lookup("state"))
 	viper.BindPFlag("desc", statusCmd.Flags().Lookup("desc"))
 	viper.BindPFlag("context", statusCmd.Flags().Lookup("context"))
 	viper.BindPFlag("url", statusCmd.Flags().Lookup("url"))
 }
 
-func check_usage() {
-	// check if a value is in a list
-	in := func(a string, list []string) bool {
+func statusCheckUsage() {
+	// check if a string is in a list
+	in := func(list []string, a string) bool {
 		for _, b := range list {
 			if b == a {
 				return true
@@ -73,6 +64,7 @@ func check_usage() {
 	}
 	missing := []string{}
 	usage := ""
+	invalid := ""
 
 	if !viper.IsSet("token") {
 		missing = append(missing, "token")
@@ -93,16 +85,19 @@ func check_usage() {
 		missing = append(missing, "context")
 	}
 
+	if viper.IsSet("state") {
+		state := strings.ToLower(viper.GetString("state"))
+		states := []string{"pending", "success", "failure", "error"}
+		if !in(states, state) {
+			invalid += fmt.Sprintf("ERROR: The 'state' flag must be one of: %s\n", strings.Join(states, ", "))
+		}
+	}
+
 	if len(missing) > 0 {
 		usage += fmt.Sprintf("MISSING REQUIRED FLAGS: %s\n", strings.Join(missing, ", "))
 	}
 
-	state = strings.ToLower(state)
-	states := []string{"pending", "success", "failure", "error"}
-	if !in(state, states) {
-		usage += fmt.Sprintf("ERROR: The 'state' flag must be one of: %s\n", strings.Join(states, ", "))
-	}
-
+	usage += invalid
 	if usage != "" {
 		fmt.Printf("\n%s\n", usage)
 		statusCmd.Help()
@@ -111,10 +106,15 @@ func check_usage() {
 }
 
 func status(cmd *cobra.Command, args []string) {
-	check_usage()
+	statusCheckUsage()
 	token := viper.GetString("token")
 	owner := viper.GetString("owner")
 	repo := viper.GetString("repo")
+	commit := viper.GetString("commit")
+	state := strings.ToLower(viper.GetString("state"))
+	desc := viper.GetString("desc")
+	context := viper.GetString("context")
+	url := viper.GetString("url")
 
 	// setup authentication via a github token and create connection
 	ts := oauth2.StaticTokenSource(
@@ -136,8 +136,8 @@ func status(cmd *cobra.Command, args []string) {
 	}
 	_, _, err := gh.Repositories.CreateStatus(owner, repo, commit, repo_status)
 	if err != nil {
-		fmt.Printf("\nERROR: %s\n", err.Error())
-		os.Exit(2)
+		log.Printf("ERROR: %s\n", err.Error())
+		os.Exit(-1)
 	}
-	fmt.Println("\nSuccessfully updated the status!\n")
+	log.Println("Successfully updated the status!")
 }

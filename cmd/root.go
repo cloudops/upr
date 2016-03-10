@@ -22,8 +22,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfg_file string
-
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "upr",
@@ -46,10 +44,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfg_file, "config", "", "config file (default is ./config.yaml)")
-	RootCmd.PersistentFlags().StringP("token", "t", "", "required: Github access token (https://github.com/settings/tokens)")
-	RootCmd.PersistentFlags().StringP("owner", "o", "", "required: owner of the repo you are working with")
-	RootCmd.PersistentFlags().StringP("repo", "r", "", "required: name of the repo you are working with")
+	RootCmd.PersistentFlags().String("config", "", "config file (default is ./config.yaml)")
+	RootCmd.PersistentFlags().StringP("commit", "c", "", "commit you are working with")
+	RootCmd.PersistentFlags().String("token", "", "required: Github access token (https://github.com/settings/tokens)")
+	RootCmd.PersistentFlags().String("owner", "", "required: owner of the repo you are working with")
+	RootCmd.PersistentFlags().String("repo", "", "required: name of the repo you are working with")
+	viper.BindPFlag("commit", RootCmd.PersistentFlags().Lookup("commit"))
 	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
 	viper.BindPFlag("owner", RootCmd.PersistentFlags().Lookup("owner"))
 	viper.BindPFlag("repo", RootCmd.PersistentFlags().Lookup("repo"))
@@ -57,6 +57,7 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	cfg_file := viper.GetString("config")
 	if cfg_file != "" { // enable ability to specify config file via flag
 		viper.SetConfigFile(cfg_file)
 	}
