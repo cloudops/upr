@@ -23,6 +23,6 @@
 {{if .UploadsExpire -}}
 Uploads will be available until `{{.UploadsExpire}}`
 {{end}}
-*Comment created by [`upr comment`](https://github.com/swill/upr).*
+*Comment created by [`upr comment`](https://github.com/cloudops/upr).*
 {{end}}
 {{end}}
