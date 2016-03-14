@@ -88,10 +88,10 @@ func init() {
 	commentCmd.Flags().String("uploads_endpoint", "", "required if 'uploads' isset: object store url endpoint")
 	commentCmd.Flags().String("uploads_region", "", fmt.Sprintf(
 		"upload region when using the '%s' api", S3))
-	commentCmd.Flags().String("uploads_identity", "", fmt.Sprintf(`%s: keystone identity as 'tenant:username'
-                                  %s: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var`, SWIFT, S3))
-	commentCmd.Flags().String("uploads_secret", "", fmt.Sprintf(`%s: keystone password
-                                  %s: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var`, SWIFT, S3))
+	commentCmd.Flags().String("uploads_identity", "", fmt.Sprintf(`%s: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var
+                                  %s: keystone identity as 'tenant:username'`, S3, SWIFT))
+	commentCmd.Flags().String("uploads_secret", "", fmt.Sprintf(`%s: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var
+                                  %s: keystone password`, S3, SWIFT))
 	commentCmd.Flags().StringP("uploads_bucket", "b", "", "required if 'uploads' isset: bucket to upload the files to (will be made public)")
 	commentCmd.Flags().IntP("uploads_expire", "e", 0, "optional number of days to keep the uploaded files before they are removed")
 	commentCmd.Flags().Int("uploads_concurrency", 4, "number of files to be uploaded concurrently")

@@ -96,11 +96,11 @@ Flags:
       --uploads_concurrency int   number of files to be uploaded concurrently (default 4)
       --uploads_endpoint string   required if 'uploads' isset: object store url endpoint
   -e, --uploads_expire int        optional number of days to keep the uploaded files before they are removed
-      --uploads_identity string   swift: keystone identity as 'tenant:username'
-                                  s3: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var
+      --uploads_identity string   s3: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var
+                                  swift: keystone identity as 'tenant:username'
       --uploads_region string     upload region when using the 's3' api
-      --uploads_secret string     swift: keystone password
-                                  s3: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var
+      --uploads_secret string     s3: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var
+                                  swift: keystone password
 
 Global Flags:
   -c, --commit string     commit you are working with
