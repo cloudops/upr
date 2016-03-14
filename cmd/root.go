@@ -49,10 +49,12 @@ func init() {
 	RootCmd.PersistentFlags().String("token", "", "required: Github access token (https://github.com/settings/tokens)")
 	RootCmd.PersistentFlags().String("owner", "", "required: owner of the repo you are working with")
 	RootCmd.PersistentFlags().String("repo", "", "required: name of the repo you are working with")
+	RootCmd.PersistentFlags().Bool("custom_template", false, "override the built in templates using a file at 'static/templates.tpl'")
 	viper.BindPFlag("commit", RootCmd.PersistentFlags().Lookup("commit"))
 	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
 	viper.BindPFlag("owner", RootCmd.PersistentFlags().Lookup("owner"))
 	viper.BindPFlag("repo", RootCmd.PersistentFlags().Lookup("repo"))
+	viper.BindPFlag("custom_template", RootCmd.PersistentFlags().Lookup("custom_template"))
 }
 
 // initConfig reads in config file and ENV variables if set.

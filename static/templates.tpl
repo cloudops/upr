@@ -20,6 +20,9 @@
 * [{{$upload.Name}}]({{$upload.URL}})
 {{end}}
 {{end}}
+{{if .UploadsExpire -}}
+Uploads will be available until `{{.UploadsExpire}}`
+{{end}}
 *Comment created by [`upr comment`](https://github.com/swill/upr).*
 {{end}}
 {{end}}

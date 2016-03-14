@@ -24,14 +24,23 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"golang.org/x/oauth2"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/google/go-github/github"
 	"github.com/ncw/swift"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/swill/upr/assets"
+)
+
+const (
+	S3    string = "s3"
+	SWIFT string = "swift"
 )
 
 var (
@@ -46,10 +55,11 @@ type Upload struct {
 }
 
 type CommentBody struct {
-	CommitID string
-	Title    string
-	Summary  string
-	Uploads  map[string][]Upload
+	CommitID      string
+	Title         string
+	Summary       string
+	Uploads       map[string][]Upload
+	UploadsExpire *time.Time // pointers can be nil, for template conditional
 }
 
 // commentCmd represents the comment command
@@ -59,10 +69,10 @@ var commentCmd = &cobra.Command{
 	Long: `Add a comment to a pull request on Github.
 
 This command allows an arbitrary CI implementation to
-post back to a pull request a detailed summary of its run.
+post a comment to a pull request issue thread.
 
 Optionally, files can be made public by uploading them to
-an object store using the Swift or S3 APIs.`,
+an object store using either the Swift or S3 API.`,
 }
 
 func init() {
@@ -73,11 +83,17 @@ func init() {
 	commentCmd.Flags().StringP("comment_file", "f", "", "required: file which includes the comment text")
 	commentCmd.Flags().StringP("title", "t", "", "the title of the comment")
 	commentCmd.Flags().StringP("uploads", "u", "", "comma separated list of files or directories to be recusively uploaded")
-	commentCmd.Flags().String("uploads_api", "", "required if 'uploads' isset: api to use to upload to an object store (s3 | swift)")
+	commentCmd.Flags().String("uploads_api", "", fmt.Sprintf(
+		"required if 'uploads' isset: api to use to upload to an object store (%s | %s)", S3, SWIFT))
 	commentCmd.Flags().String("uploads_endpoint", "", "required if 'uploads' isset: object store url endpoint")
-	commentCmd.Flags().String("uploads_identity", "", "required if 'uploads' isset: aws access key if 's3' | keystone identity as 'tenant:username' if 'swift'")
-	commentCmd.Flags().String("uploads_secret", "", "required if 'uploads' isset: aws secret key if 's3' | keystone password if 'swift'")
-	commentCmd.Flags().StringP("uploads_bucket", "b", "", "required if 'uploads' isset: object storage bucket to upload the files to and make public")
+	commentCmd.Flags().String("uploads_region", "", fmt.Sprintf(
+		"upload region when using the '%s' api", S3))
+	commentCmd.Flags().String("uploads_identity", "", fmt.Sprintf(
+		"keystone identity as 'tenant:username' if '%s' | for '%s', use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var", SWIFT, S3))
+	commentCmd.Flags().String("uploads_secret", "", fmt.Sprintf(
+		"keystone password if '%s' | for '%s', use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var", SWIFT, S3))
+	commentCmd.Flags().StringP("uploads_bucket", "b", "", "required if 'uploads' isset: bucket to upload the files to (will be made public)")
+	commentCmd.Flags().IntP("uploads_expire", "e", 0, "optional number of days to keep the uploaded files before they are removed")
 	commentCmd.Flags().Int("uploads_concurrency", 4, "number of files to be uploaded concurrently")
 	viper.BindPFlag("pr_num", commentCmd.Flags().Lookup("pr_num"))
 	viper.BindPFlag("file", commentCmd.Flags().Lookup("comment_file"))
@@ -85,9 +101,11 @@ func init() {
 	viper.BindPFlag("uploads", commentCmd.Flags().Lookup("uploads"))
 	viper.BindPFlag("uploads_api", commentCmd.Flags().Lookup("uploads_api"))
 	viper.BindPFlag("uploads_endpoint", commentCmd.Flags().Lookup("uploads_endpoint"))
+	viper.BindPFlag("uploads_region", commentCmd.Flags().Lookup("uploads_region"))
 	viper.BindPFlag("uploads_identity", commentCmd.Flags().Lookup("uploads_identity"))
 	viper.BindPFlag("uploads_secret", commentCmd.Flags().Lookup("uploads_secret"))
 	viper.BindPFlag("uploads_bucket", commentCmd.Flags().Lookup("uploads_bucket"))
+	viper.BindPFlag("uploads_expire", commentCmd.Flags().Lookup("uploads_expire"))
 	viper.BindPFlag("uploads_concurrency", commentCmd.Flags().Lookup("uploads_concurrency"))
 }
 
@@ -128,25 +146,29 @@ func commentCheckUsage() {
 		if !viper.IsSet("uploads_endpoint") {
 			missing = append(missing, "uploads_endpoint")
 		}
-		if !viper.IsSet("uploads_identity") {
-			missing = append(missing, "uploads_identity")
-		}
-		if !viper.IsSet("uploads_secret") {
-			missing = append(missing, "uploads_secret")
-		}
 		if !viper.IsSet("uploads_bucket") {
 			missing = append(missing, "uploads_bucket")
 		}
 
 		api := strings.ToLower(viper.GetString("uploads_api"))
-		apis := []string{"s3", "swift"}
+		apis := []string{S3, SWIFT}
 		if !in(apis, api) {
 			invalid += fmt.Sprintf("ERROR: The 'uploads_api' flag must be one of: %s\n", strings.Join(apis, ", "))
 		}
-		if api == "swift" && viper.IsSet("uploads_identity") {
+		if api == SWIFT && !viper.IsSet("uploads_identity") {
+			missing = append(missing, "uploads_identity")
+		}
+		if api == SWIFT && !viper.IsSet("uploads_secret") {
+			missing = append(missing, "uploads_secret")
+		}
+		if api == SWIFT && viper.IsSet("uploads_identity") {
 			if !strings.Contains(viper.GetString("uploads_identity"), ":") {
-				invalid += fmt.Sprintf("ERROR: The 'uploads_identity' flag for 'swift' is formatted as 'tenant:username'\n")
+				invalid += fmt.Sprintf("ERROR: The 'uploads_identity' flag for '%s' is formatted as 'tenant:username'\n", SWIFT)
 			}
+		}
+		if api == S3 && !viper.IsSet("uploads_region") {
+			missing = append(missing, "uploads_region")
+			invalid += fmt.Sprintf("ERROR: The 'uploads_region' flag is required when using the '%s' api for 'uploads'\n", S3)
 		}
 	}
 
@@ -187,8 +209,12 @@ func comment(cmd *cobra.Command, args []string) {
 	api := strings.ToLower(viper.GetString("uploads_api"))
 
 	// load the templates to be used later
+	local := false // default to false
+	if viper.IsSet("custom_template") {
+		local = viper.GetBool("custom_template")
+	}
 	templates = template.Must(template.New("").Parse(
-		assets.FSMustString(false, fmt.Sprintf("%sstatic%stemplates.tpl", string(os.PathSeparator), string(os.PathSeparator))),
+		assets.FSMustString(local, fmt.Sprintf("%sstatic%stemplates.tpl", string(os.PathSeparator), string(os.PathSeparator))),
 	))
 
 	// setup authentication via a github token and create connection
@@ -259,10 +285,10 @@ func comment(cmd *cobra.Command, args []string) {
 		if viper.IsSet("uploads") {
 			comment_body.PopulateUploads()
 
-			if api == "swift" {
+			if api == SWIFT {
 				comment_body.UploadToSwift()
 			}
-			if api == "s3" {
+			if api == S3 {
 				comment_body.UploadToS3()
 			}
 		}
@@ -288,7 +314,7 @@ func comment(cmd *cobra.Command, args []string) {
 		}
 	}
 	if found_pr {
-		log.Printf("Finished commenting on pull request(s)\n\n")
+		log.Printf("Finished commenting on pull request(s)!\n\n")
 	} else {
 		log.Printf("NOTICE: No PRs were found matching your query, nothing done...%s\n\n")
 	}
@@ -363,6 +389,13 @@ func (c *CommentBody) PopulateUploads() {
 func (c *CommentBody) UploadToSwift() {
 	var tenant, username string
 	bucket := viper.GetString("uploads_bucket")
+	expires := viper.GetInt("uploads_expire")
+	var expire_time time.Time
+	if expires != 0 {
+		// Making the Swift format match the required S3 format of '2014-04-08T00:00:00.000Z', truncated to midnight on GTM time
+		expire_time = time.Now().Truncate(time.Duration(24) * time.Hour).Add(time.Duration(expires+1) * 24 * time.Hour)
+		c.UploadsExpire = &expire_time
+	}
 
 	// get the details about the identity (tenant and user)
 	parts := strings.Split(viper.GetString("uploads_identity"), ":")
@@ -370,7 +403,7 @@ func (c *CommentBody) UploadToSwift() {
 		tenant = parts[0]
 		username = parts[1]
 	} else {
-		log.Printf("ERROR: The 'uploads_identity' flag for 'swift' is formatted as 'tenant:username'\n")
+		log.Printf("ERROR: The 'uploads_identity' flag for '%s' is formatted as 'tenant:username'\n", SWIFT)
 		commentCmd.Help()
 		os.Exit(-1)
 	}
@@ -423,15 +456,20 @@ func (c *CommentBody) UploadToSwift() {
 				return err
 			}
 			defer f.Close()
+			obj_metadata := make(swift.Metadata, 0)
+			obj_headers := obj_metadata.ObjectHeaders()
+			if expires != 0 {
+				obj_headers["X-Delete-At"] = fmt.Sprintf("%d", expire_time.Unix())
+			}
 			// currently NOT validating the hash of the upload since I expect large files
-			_, err = conn.ObjectPut(bucket, u.Obj, f, false, "", "", nil)
+			_, err = conn.ObjectPut(bucket, u.Obj, f, false, "", "", obj_headers)
 			if err != nil {
 				log.Printf("ERROR: Problem uploading object '%s'\n", u.Obj)
 				log.Println(err)
 				return err
 			}
 			log.Printf(" uploaded: %s\n", u.Obj)
-			u.URL = fmt.Sprintf("%s/%s/%s", conn.StorageUrl, bucket, u.Obj)
+			u.URL = fmt.Sprintf("%s/%s/%s", strings.TrimRight(conn.StorageUrl, "/"), bucket, u.Obj)
 		}
 		return nil
 	}
@@ -461,9 +499,144 @@ func (c *CommentBody) UploadToSwift() {
 
 // Upload the files via the S3 API
 func (c *CommentBody) UploadToS3() {
-	//for dir, uploads := range c.Uploads { // loop through the map
-	//	for i, upload := range uploads { // loop through each dir list
-	//		//
-	//	}
-	//}
+	bucket := viper.GetString("uploads_bucket")
+	endpoint := viper.GetString("uploads_endpoint")
+	region := viper.GetString("uploads_region")
+	expires := viper.GetInt("uploads_expire")
+	var expire_time time.Time
+	if expires != 0 {
+		// S3 requires the format to be '2014-04-08T00:00:00.000Z', truncated to midnight on GTM time
+		expire_time = time.Now().Truncate(time.Duration(24) * time.Hour).Add(time.Duration(expires+1) * 24 * time.Hour)
+		c.UploadsExpire = &expire_time
+	}
+
+	conn := s3.New(session.New(), &aws.Config{
+		Endpoint: aws.String(endpoint),
+		Region:   aws.String(region),
+	})
+
+	// does bucket exist?
+	head_bucket_params := &s3.HeadBucketInput{
+		Bucket: aws.String(bucket), // Required
+	}
+	_, err := conn.HeadBucket(head_bucket_params)
+	if err != nil { // bucket did not exist, create it...
+		// create a bucket
+		create_bucket_params := &s3.CreateBucketInput{
+			Bucket: aws.String(bucket), // Required
+		}
+		_, err = conn.CreateBucket(create_bucket_params)
+		if err != nil {
+			log.Printf("ERROR: Problem creating bucket '%s'\n", bucket)
+			log.Println(err)
+			os.Exit(-1)
+		}
+	}
+
+	// update the acls for the bucket
+	acl_bucket_params := &s3.PutBucketAclInput{
+		Bucket: aws.String(bucket),
+		ACL:    aws.String(s3.BucketCannedACLPublicRead),
+	}
+	_, err = conn.PutBucketAcl(acl_bucket_params)
+	if err != nil {
+		log.Printf("ERROR: Problem updating ACLs to make bucket '%s' public\n", bucket)
+		log.Println(err)
+		os.Exit(-1)
+	}
+
+	// set the expire time for the bucket
+	if expires != 0 {
+		bucket_lifecycle_params := &s3.PutBucketLifecycleConfigurationInput{
+			Bucket: aws.String(bucket), // Required
+			LifecycleConfiguration: &s3.BucketLifecycleConfiguration{
+				Rules: []*s3.LifecycleRule{ // Required
+					{ // Required
+						Prefix: aws.String("upload-expires"),           // Required
+						Status: aws.String(s3.ExpirationStatusEnabled), // Required
+						Expiration: &s3.LifecycleExpiration{
+							Date: aws.Time(expire_time),
+						},
+					},
+				},
+			},
+		}
+		_, err = conn.PutBucketLifecycleConfiguration(bucket_lifecycle_params)
+		if err != nil {
+			log.Printf("ERROR: Problem updating lifecycle to automatically expire objects in bucket '%s'\n", bucket)
+			log.Println(err)
+			os.Exit(-1)
+		}
+	}
+
+	log.Printf("Using bucket: %s\n", bucket)
+	log.Println("Starting upload...  This can take a while, go get a coffee.  :)")
+
+	// do the actual upload
+	process_upload := func(u *Upload) error {
+		if len(u.Obj) > 0 {
+			if expires != 0 {
+				u.Obj = fmt.Sprintf("upload-expires/%s", u.Obj)
+			}
+			log.Printf("  started: %s\n", u.Obj)
+			f, err := os.Open(u.Path)
+			if err != nil {
+				log.Printf("ERROR: Problem opening file '%s'\n", u.Path)
+				log.Println(err)
+				return err
+			}
+			defer f.Close()
+			put_obj_params := &s3.PutObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    aws.String(u.Obj),
+				Body:   f,
+			}
+			if expires != 0 {
+				put_obj_params.Expires = aws.Time(expire_time)
+			}
+			_, err = conn.PutObject(put_obj_params)
+			if err != nil {
+				log.Printf("ERROR: Problem uploading object '%s'\n", u.Obj)
+				log.Println(err)
+				return err
+			}
+			// update the acls for the object
+			acl_object_params := &s3.PutObjectAclInput{
+				Bucket: aws.String(bucket),
+				Key:    aws.String(u.Obj),
+				ACL:    aws.String(s3.ObjectCannedACLPublicRead),
+			}
+			_, err = conn.PutObjectAcl(acl_object_params)
+			if err != nil {
+				log.Printf("ERROR: Problem updating ACLs to make object '%s' public\n", u.Obj)
+				log.Println(err)
+				return err
+			}
+			log.Printf(" uploaded: %s\n", u.Obj)
+			u.URL = fmt.Sprintf("%s/%s/%s", strings.TrimRight(endpoint, "/"), bucket, u.Obj)
+		}
+		return nil
+	}
+
+	// setup 'process_upload' concurrency controls
+	uploadc := make(chan *Upload)
+	var wg sync.WaitGroup
+	// setup the number of concurrent goroutine workers
+	for i := 0; i < viper.GetInt("uploads_concurrency"); i++ {
+		wg.Add(1)
+		go func() {
+			for u := range uploadc {
+				process_upload(u)
+			}
+			wg.Done()
+		}()
+	}
+	// feed the uploads into the concurrent goroutines to be uploaded
+	for dir, uploads := range c.Uploads { // loop through the map
+		for i, _ := range uploads { // loop through each dir list
+			uploadc <- &c.Uploads[dir][i] // point to the object so we can modify it inline
+		}
+	}
+	close(uploadc)
+	wg.Wait()
 }
