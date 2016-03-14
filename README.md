@@ -58,7 +58,7 @@ owner: swill
 repo: upr
 ```
 
-``` bash
+```
 $ upr status -c afa097edb9b06d92cc1458f62e5ec77c808ac85f -x "CloudOps CI" -d "CI run on Xen with an Advanced Network" -s "success"
 Using config file: /path/to/upr/config.yaml
 2016/03/13 21:19:27 Successfully updated the status!
@@ -117,18 +117,18 @@ token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 owner: swill
 repo: upr
 
-// credentials in '~/.aws/credentials'
+# credentials in '~/.aws/credentials'
 uploads_api: s3
 uploads_endpoint: https://s3-us-west-1.amazonaws.com
 uploads_region: us-west-1
 
-//uploads_api: swift
-//uploads_endpoint: https://auth-east.cloud.ca/v2.0
-//uploads_identity: tenant:username
-//uploads_secret: XXXXXXXXXXXXXXXX
+#uploads_api: swift
+#uploads_endpoint: https://auth-east.cloud.ca/v2.0
+#uploads_identity: tenant:username
+#uploads_secret: XXXXXXXXXXXXXXXX
 ```
 
-``` bash
+```
 $ upr comment -c afa097edb9b06d92cc1458f62e5ec77c808ac85f -f comment_text.md -t "Optional 'title'" -u data -b upr-example -e 7
 Using config file: /path/to/upr/config.yaml
 2016/03/13 20:44:39 Updating PR '2' with details.
@@ -148,7 +148,7 @@ Configuration
 -------------
 By default, a config file at `./config.yaml` will automatically be picked up if it exists.  You can also specify your own config file by passing in the `--config` flag.
 
-The following config file formats are supported: JSON, YAML, TOML and HCL
+The following config file formats are supported: `JSON`, `YAML`, `TOML` and `HCL`
 
 It is recommended that you configure all of the global configuration flags, such as `token`, `owner` and `repo`, into a config file and only pass the contextual configuration flags via the command line.
 
