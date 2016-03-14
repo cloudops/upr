@@ -50,6 +50,7 @@ func init() {
 	RootCmd.PersistentFlags().String("owner", "", "required: owner of the repo you are working with")
 	RootCmd.PersistentFlags().String("repo", "", "required: name of the repo you are working with")
 	RootCmd.PersistentFlags().Bool("custom_template", false, "override the built in templates using a file at 'static/templates.tpl'")
+	viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("commit", RootCmd.PersistentFlags().Lookup("commit"))
 	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
 	viper.BindPFlag("owner", RootCmd.PersistentFlags().Lookup("owner"))
