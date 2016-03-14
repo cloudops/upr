@@ -18,7 +18,11 @@ Cross compiled binaries are available under [Releases](https://github.com/swill/
 `$ upr status`
 -------------
 
+<<<<<<< HEAD
 ![Pull Request Status](https://objects-east.cloud.ca/v1/5ef827605f884961b94881e928e7a250/swill/pr_testing/combo_ci.png)
+=======
+The `token` needs to simply have `repo:status` permission on the target `repo` in order for this tool to function.
+>>>>>>> 0c55de17d86dd2d7216e42ef1c4cf0603788f4be
 
 The `token` needs to have `repo:status` permissions on the target `repo` in order for this command to work.
 
