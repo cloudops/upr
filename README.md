@@ -9,8 +9,8 @@ This tool is designed to be integrated into a CI implementation
 in order to update the Status of a pull request commit.
 
 
-Get `upr`
----------
+Download
+--------
 
 Cross compiled binaries are available under [Releases](https://github.com/swill/upr/releases).  Simply download the correct binary for your system and run it.
 
@@ -20,7 +20,7 @@ Cross compiled binaries are available under [Releases](https://github.com/swill/
 
 ![Pull Request Status](https://objects-east.cloud.ca/v1/5ef827605f884961b94881e928e7a250/swill/pr_testing/combo_ci.png)
 
-The `token` needs to have `repo:status` permissions on the target `repo` in order for this command to work.
+The `token` needs to have `repo:status` permission on the target `repo` in order for this command to work.
 
 **Usage**
 ```
@@ -70,7 +70,7 @@ Using config file: /path/to/upr/config.yaml
 
 ![Pull Request Comment](https://objects-east.cloud.ca/v1/5ef827605f884961b94881e928e7a250/swill/pr_testing/comment.png)
 
-The `token` needs to have `public_repo` permissions on the target `repo` in order for this command to work.
+The `token` can be your own personal token, but it needs to have at least the `public_repo` permission in order for this command to work.
 
 **Usage**
 ```
@@ -131,16 +131,16 @@ uploads_region: us-west-1
 ```
 $ upr comment -c afa097edb9b06d92cc1458f62e5ec77c808ac85f -f comment_text.md -t "Optional 'title'" -u data -b upr-example -e 7
 Using config file: /path/to/upr/config.yaml
-2016/03/13 20:44:39 Updating PR '2' with details.
-2016/03/13 20:44:40 Using bucket: upr-example
-2016/03/13 21:14:09 Starting upload...  This can take a while, go get a coffee.  :)
-2016/03/13 21:14:09   started: upload-expires/data/readme.md
-2016/03/13 21:14:09   started: upload-expires/data/xen_advanced/full_run.log
-2016/03/13 21:14:09   started: upload-expires/data/xen_advanced/env_setup.log
-2016/03/13 21:14:10  uploaded: upload-expires/data/readme.md
-2016/03/13 21:14:10  uploaded: upload-expires/data/xen_advanced/full_run.log
-2016/03/13 21:14:10  uploaded: upload-expires/data/xen_advanced/env_setup.log
-2016/03/13 21:14:10 Finished commenting on pull request(s)
+2016/03/13 23:23:13 Using bucket: upr-example
+2016/03/13 23:23:13 Starting upload...  This can take a while, go get a coffee.  :)
+2016/03/13 23:23:13   started: upload-expires/data/readme.md
+2016/03/13 23:23:13   started: upload-expires/data/xen_advanced/env_setup.log
+2016/03/13 23:23:13   started: upload-expires/data/xen_advanced/full_run.log
+2016/03/13 23:23:13  uploaded: upload-expires/data/readme.md
+2016/03/13 23:23:13  uploaded: upload-expires/data/xen_advanced/env_setup.log
+2016/03/13 23:23:13  uploaded: upload-expires/data/xen_advanced/full_run.log
+2016/03/13 23:23:13 Updating PR '2' with details.
+2016/03/13 23:23:13 Finished commenting on pull request(s)!
 ```
 
 

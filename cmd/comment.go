@@ -256,12 +256,9 @@ func comment(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	// loop through all the PRs to comment on and make the comment
-	for _, pr_int := range prs {
-		found_pr = true
-		// Proceed commenting on all relevant PRs
-		log.Printf("Updating PR '%d' with details.\n", pr_int)
-
+	// have at least one PR to post to, create the comment and upload files (if needed)
+	var comment *github.IssueComment
+	if len(prs) > 0 {
 		// get comment text
 		comment_text, err := ioutil.ReadFile(comment_file)
 		if err != nil {
@@ -303,11 +300,18 @@ func comment(cmd *cobra.Command, args []string) {
 		_body := &body
 
 		// create the issue comment on github
-		comment := &github.IssueComment{
+		comment = &github.IssueComment{
 			Body: _body,
 		}
+	}
 
-		_, _, err = gh.Issues.CreateComment(owner, repo, pr_int, comment)
+	// loop through all the PRs to comment on and make the comment
+	for _, pr_int := range prs {
+		found_pr = true
+		// Proceed commenting on all relevant PRs
+		log.Printf("Updating PR '%d' with details.\n", pr_int)
+
+		_, _, err := gh.Issues.CreateComment(owner, repo, pr_int, comment)
 		if err != nil {
 			log.Printf("ERROR: %s\n", err.Error())
 			os.Exit(-1)
@@ -316,7 +320,7 @@ func comment(cmd *cobra.Command, args []string) {
 	if found_pr {
 		log.Printf("Finished commenting on pull request(s)!\n\n")
 	} else {
-		log.Printf("NOTICE: No PRs were found matching your query, nothing done...%s\n\n")
+		log.Printf("NOTICE: No PRs were found matching your query, nothing done...\n\n")
 	}
 
 }
