@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -45,6 +46,7 @@ const (
 
 var (
 	templates *template.Template
+	stdin     []byte
 )
 
 type Upload struct {
@@ -80,21 +82,21 @@ func init() {
 
 	commentCmd.Run = comment
 	commentCmd.Flags().IntP("pr_num", "n", 0, "required unless 'commit' isset: pull request number on which to comment on")
-	commentCmd.Flags().StringP("comment_file", "f", "", "required: file which includes the comment text")
-	commentCmd.Flags().StringP("title", "t", "", "the title of the comment")
-	commentCmd.Flags().StringP("uploads", "u", "", "comma separated list of files or directories to be recusively uploaded")
+	commentCmd.Flags().StringP("comment_file", "f", "", "required unless piped stdin: file which includes the comment text")
+	commentCmd.Flags().StringP("title", "t", "", "optional: the title of the comment")
+	commentCmd.Flags().StringP("uploads", "u", "", "optional: comma separated list of files or directories to be recusively uploaded")
 	commentCmd.Flags().String("uploads_api", "", fmt.Sprintf(
 		"required if 'uploads' isset: api to use to upload to an object store (%s | %s)", S3, SWIFT))
 	commentCmd.Flags().String("uploads_endpoint", "", "required if 'uploads' isset: object store url endpoint")
 	commentCmd.Flags().String("uploads_region", "", fmt.Sprintf(
 		"upload region when using the '%s' api", S3))
-	commentCmd.Flags().String("uploads_identity", "", fmt.Sprintf(`%s: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var
-                                  %s: keystone identity as 'tenant:username'`, S3, SWIFT))
-	commentCmd.Flags().String("uploads_secret", "", fmt.Sprintf(`%s: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var
-                                  %s: keystone password`, S3, SWIFT))
+	commentCmd.Flags().String("uploads_identity", "", fmt.Sprintf(`%s: keystone identity as 'tenant:username'
+                                  %s: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var`, SWIFT, S3))
+	commentCmd.Flags().String("uploads_secret", "", fmt.Sprintf(`%s: keystone password
+                                  %s: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var`, SWIFT, S3))
 	commentCmd.Flags().StringP("uploads_bucket", "b", "", "required if 'uploads' isset: bucket to upload the files to (will be made public)")
-	commentCmd.Flags().IntP("uploads_expire", "e", 0, "optional number of days to keep the uploaded files before they are removed")
-	commentCmd.Flags().Int("uploads_concurrency", 4, "number of files to be uploaded concurrently")
+	commentCmd.Flags().IntP("uploads_expire", "e", 0, "optional: number of days to keep the uploaded files before they are removed")
+	commentCmd.Flags().Int("uploads_concurrency", 4, "optional: number of files to be uploaded concurrently")
 	viper.BindPFlag("pr_num", commentCmd.Flags().Lookup("pr_num"))
 	viper.BindPFlag("file", commentCmd.Flags().Lookup("comment_file"))
 	viper.BindPFlag("title", commentCmd.Flags().Lookup("title"))
@@ -123,6 +125,16 @@ func commentCheckUsage() {
 	usage := ""
 	invalid := ""
 
+	// get stdin data
+	get_stdin := func() []byte {
+		var buffer bytes.Buffer
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			buffer.WriteString(scanner.Text() + "\n")
+		}
+		return buffer.Bytes()
+	}
+
 	if !viper.IsSet("token") {
 		missing = append(missing, "token")
 	}
@@ -135,8 +147,10 @@ func commentCheckUsage() {
 	if !viper.IsSet("commit") && !viper.IsSet("pr_num") {
 		missing = append(missing, "(commit || pr_num)")
 	}
-	if !viper.IsSet("file") {
+	stdin = get_stdin()
+	if !viper.IsSet("file") && len(stdin) == 0 {
 		missing = append(missing, "comment_file")
+		invalid += "ERROR: You must either pass in a 'comment_file' or pip in 'stdin'\n"
 	}
 
 	if viper.IsSet("uploads") {
@@ -260,10 +274,20 @@ func comment(cmd *cobra.Command, args []string) {
 	var comment *github.IssueComment
 	if len(prs) > 0 {
 		// get comment text
-		comment_text, err := ioutil.ReadFile(comment_file)
-		if err != nil {
-			log.Printf("ERROR reading comment_file '%s': %s\n", comment_file, err.Error())
-			os.Exit(-1)
+		var comment_text []byte
+		if viper.IsSet("file") {
+			var err error
+			comment_text, err = ioutil.ReadFile(comment_file)
+			if err != nil {
+				log.Printf("ERROR reading comment_file '%s': %s\n", comment_file, err.Error())
+				os.Exit(-1)
+			}
+		}
+		if len(stdin) > 0 {
+			if len(comment_text) > 0 {
+				comment_text = append(comment_text, []byte("\n\n")...)
+			}
+			comment_text = append(comment_text, stdin...)
 		}
 
 		// populate the CommentBody object to be passed into the template
@@ -291,7 +315,7 @@ func comment(cmd *cobra.Command, args []string) {
 		}
 
 		var buf bytes.Buffer
-		err = templates.ExecuteTemplate(&buf, "pr_comment", comment_body)
+		err := templates.ExecuteTemplate(&buf, "pr_comment", comment_body)
 		if err != nil {
 			log.Printf("ERROR executing template: %s\n", err.Error())
 			os.Exit(-1)

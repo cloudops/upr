@@ -43,9 +43,9 @@ func init() {
 
 	statusCmd.Run = status
 	statusCmd.Flags().StringP("state", "s", "", "required: pull request state (pending | success | failure | error)")
-	statusCmd.Flags().StringP("desc", "d", "", "a short description of the environment context")
+	statusCmd.Flags().StringP("desc", "d", "", "optional: a short description of the environment context")
 	statusCmd.Flags().StringP("context", "x", "", "required: the contextual identifier for this status")
-	statusCmd.Flags().StringP("url", "u", "", "a reference url for more information about this status")
+	statusCmd.Flags().StringP("url", "u", "", "optional: a reference url for more information about this status")
 	viper.BindPFlag("state", statusCmd.Flags().Lookup("state"))
 	viper.BindPFlag("desc", statusCmd.Flags().Lookup("desc"))
 	viper.BindPFlag("context", statusCmd.Flags().Lookup("context"))
