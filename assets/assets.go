@@ -188,15 +188,15 @@ var _escData = map[string]*_escFile{
 
 	"/static/templates.tpl": {
 		local:   "static/templates.tpl",
-		size:    525,
-		modtime: 1457929746,
+		size:    535,
+		modtime: 1461446549,
 		compressed: `
-H4sIAAAJbogA/1yRwU7zMBCE7/9TrNIe2ugnuUfigIADEuJQ6KmqiJNsW0uOYzk2UFl+d7a226acLO/O
-fBqPnetwxyVCpvRnO/Q9SpN5/885voPigxuBcEf32WwGzsVBWKPs6Ey6RzJy8/IUpHker7DCHWqULVYn
-61njfZ5P/cW77Xumj1faWomBdWOCPYzj0HJmsIO0ID8pNZN7hHnH9X+Y22Sp7m/tASijDLIiS8zaudPE
-+7qahLkwI+0Eu4CDDzbki5PijfVUxHZxnaxXr94vJ7TzOXnT84/iOjZ6jvnNhYAGgX0xLlhDfVtpuADK
-eOuitBdoqJi+ClqNoZrmCJvaKg3pD+vt4mCMGquy3HNzsE1Bi7IVg+0GNZakXBb536y/AQAA//8PpgTi
-DQIAAA==
+H4sIAAAJbogA/1SRMU/DMBCFd37FKe3QRjTZIzEgYEBCDIVOVUWc5NpacpzIsYHK8n/nYruhmaK7e+/T
+y7O1DR65REh69VV3bYtSJ7Bx7s5afoTsk2uBfl4sFmBtWNBI9w2gbCblE5m5fn324jQNI2zxiApljcVo
+vmqcS9M5IfswbcvUJZBH3q4XHWuGiHschq7mTGMD8RAIiskTwrLh6h6WJlqKh7ndA2WQQZIlkVlaO26c
+K0qC3aaJ1MAbcRPaO2FPzrDJ3llLdRxW/5vd9s25NVGutNuWYqyX356r0Os16A8XAioE9s24YBW1bqTm
+Aijl3OVcOUF9zfRkUCv05VQX2JemVxDfsjyszlr3Q5HnJ67PpsrokNeiM03XDzkp19n83/33LwAA///i
+Cn6TFwIAAA==
 `,
 	},
 
