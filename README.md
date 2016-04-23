@@ -87,20 +87,20 @@ Usage:
   upr comment [flags]
 
 Flags:
-  -f, --comment_file string       required: file which includes the comment text
+  -f, --comment_file string       required unless piped stdin: file which includes the comment text
   -n, --pr_num int                required unless 'commit' isset: pull request number on which to comment on
-  -t, --title string              the title of the comment
-  -u, --uploads string            comma separated list of files or directories to be recusively uploaded
+  -t, --title string              optional: the title of the comment
+  -u, --uploads string            optional: comma separated list of files or directories to be recusively uploaded
       --uploads_api string        required if 'uploads' isset: api to use to upload to an object store (s3 | swift)
   -b, --uploads_bucket string     required if 'uploads' isset: bucket to upload the files to (will be made public)
-      --uploads_concurrency int   number of files to be uploaded concurrently (default 4)
+      --uploads_concurrency int   optional: number of files to be uploaded concurrently (default 4)
       --uploads_endpoint string   required if 'uploads' isset: object store url endpoint
-  -e, --uploads_expire int        optional number of days to keep the uploaded files before they are removed
-      --uploads_identity string   s3: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var
-                                  swift: keystone identity as 'tenant:username'
+  -e, --uploads_expire int        optional: number of days to keep the uploaded files before they are removed
+      --uploads_identity string   swift: keystone identity as 'tenant:username'
+                                  s3: use the '~/.aws/credentials' file or a 'AWS_ACCESS_KEY_ID' env var
       --uploads_region string     upload region when using the 's3' api
-      --uploads_secret string     s3: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var
-                                  swift: keystone password
+      --uploads_secret string     swift: keystone password
+                                  s3: use the '~/.aws/credentials' file or a 'AWS_SECRET_ACCESS_KEY' env var
 
 Global Flags:
   -c, --commit string     commit you are working with
@@ -123,15 +123,17 @@ repo: upr
 uploads_api: s3
 uploads_endpoint: https://s3-us-west-1.amazonaws.com
 uploads_region: us-west-1
+uploads_expire: 90
 
 #uploads_api: swift
 #uploads_endpoint: https://auth-east.cloud.ca/v2.0
 #uploads_identity: tenant:username
 #uploads_secret: XXXXXXXXXXXXXXXX
+#uploads_expire: 30
 ```
 
 ```
-$ upr comment -c afa097edb9b06d92cc1458f62e5ec77c808ac85f -f comment_text.md -t "Optional 'title'" -u data -b upr-example -e 7
+$ upr comment -c afa097edb9b06d92cc1458f62e5ec77c808ac85f -f comment_text.md -t "Optional 'title'" -u data -b upr-example
 Using config file: /path/to/upr/config.yaml
 2016/03/13 23:23:13 Using bucket: upr-example
 2016/03/13 23:23:13 Starting upload...  This can take a while, go get a coffee.  :)
@@ -143,6 +145,12 @@ Using config file: /path/to/upr/config.yaml
 2016/03/13 23:23:13  uploaded: upload-expires/data/xen_advanced/full_run.log
 2016/03/13 23:23:13 Updating PR '2' with details.
 2016/03/13 23:23:13 Finished commenting on pull request(s)!
+```
+
+You also have the option to pipe in STDIN instead of specifying the `-f, --comment_file string` flag.  This is useful if you have a different script generating the content of the comment.
+
+```
+$ echo "the comment content for PR #13" | upr comment -n 13 -b pr13 -u data
 ```
 
 

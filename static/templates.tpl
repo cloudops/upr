@@ -1,11 +1,11 @@
 {{define "pr_comment"}}
 {{if .Title -}}
 ### {{.Title}}
-{{end}}
+{{-end}}
 
 {{if .CommitID -}}
 **Commit Reference: {{.CommitID}}**
-{{end}}
+{{-end}}
 
 {{.Summary}}
 
@@ -14,15 +14,15 @@
 
 {{range $dir, $uploads := .Uploads -}}
 {{if ne $dir "." -}}
-**`{{$dir}}`:**
-{{end}}
+**`{{$dir}}:`**
+{{-end}}
 {{range $upload := $uploads -}}
 * [{{$upload.Name}}]({{$upload.URL}})
-{{end}}
-{{end}}
+{{-end}}
+{{-end}}
 {{if .UploadsExpire -}}
 Uploads will be available until `{{.UploadsExpire}}`
-{{end}}
+{{-end}}
 *Comment created by [`upr comment`](https://github.com/cloudops/upr).*
-{{end}}
-{{end}}
+{{-end}}
+{{-end}}
