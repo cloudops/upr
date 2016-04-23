@@ -1,7 +1,7 @@
 `upr`
 =====
 
-**Current Version: 0.2.0**
+**Current Version: 0.3.0**
 
 A command line tool to manipulate pull requests on Github.
 	
@@ -165,6 +165,9 @@ It is recommended that you configure all of the global configuration flags, such
 
 Change Log
 ----------
+
+### 0.3.0 - 2016/04/23
+- Added the ability to pipe in the comment text from STDIN.  Useful when another script generates the comment text.
 
 ### 0.2.0 - 2016/03/13
 - Added the ability to `comment` on a pull request (by PR number or commit).
